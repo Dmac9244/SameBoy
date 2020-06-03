@@ -95,6 +95,7 @@ typedef struct
         uint8_t current_sample; // Current sample before shifting.
 
         int8_t wave_form[32];
+        int8_t wave_form_alt[32];
         bool wave_form_just_read;
     } wave_channel;
 
