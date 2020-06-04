@@ -378,7 +378,7 @@ void GB_apu_div_event(GB_gameboy_t *gb)
             if (gb->apu.square_channels[i].length_enabled) {
                 if (gb->apu.square_channels[i].pulse_length) {
                     if (!--gb->apu.square_channels[i].pulse_length) {
-                        gb->apu.is_active[i] = false;
+                        //gb->apu.is_active[i] = false;
                         update_sample(gb, i, 0, 0);
                     }
                 }
@@ -388,7 +388,7 @@ void GB_apu_div_event(GB_gameboy_t *gb)
         if (gb->apu.wave_channel.length_enabled) {
             if (gb->apu.wave_channel.pulse_length) {
                 if (!--gb->apu.wave_channel.pulse_length) {
-                    gb->apu.is_active[GB_WAVE] = false;
+                    //gb->apu.is_active[GB_WAVE] = false;
                     update_sample(gb, GB_WAVE, 0, 0);
                 }
             }
@@ -397,7 +397,7 @@ void GB_apu_div_event(GB_gameboy_t *gb)
         if (gb->apu.noise_channel.length_enabled) {
             if (gb->apu.noise_channel.pulse_length) {
                 if (!--gb->apu.noise_channel.pulse_length) {
-                    gb->apu.is_active[GB_NOISE] = false;
+                    //gb->apu.is_active[GB_NOISE] = false;
                     update_sample(gb, GB_NOISE, 0, 0);
                 }
             }
@@ -418,7 +418,7 @@ void GB_apu_div_event(GB_gameboy_t *gb)
 
                 if (gb->io_registers[GB_IO_NR10] & 0x70) {
                     /* Recalculation and overflow check only occurs after a delay */
-                    gb->apu.square_sweep_calculate_countdown = 0x13 - gb->apu.lf_div;
+                    gb->apu.square_sweep_calculate_countdown = gb->apu.lf_div;
                 }
 
                 gb->apu.square_sweep_countdown = ((gb->io_registers[GB_IO_NR10] >> 4) & 7);
@@ -840,14 +840,14 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
             gb->apu.wave_channel.sample_length |= (value & 7) << 8;
             if ((value & 0x80)) {
                 /* DMG bug: wave RAM gets corrupted if the channel is retriggerred 1 cycle before the APU
-                            reads from it. 
+                            reads from it. */ 
                 if (!GB_is_cgb(gb) &&
                     gb->apu.is_active[GB_WAVE] &&
                     gb->apu.wave_channel.sample_countdown == 0 &&
                     gb->apu.wave_channel.enable) {
                     unsigned offset = ((gb->apu.wave_channel.current_sample_index + 1) >> 1) & 0xF;
-
-                    /* This glitch varies between models and even specific instances:
+/*
+                     This glitch varies between models and even specific instances:
                        DMG-B:     Most of them behave as emulated. A few behave differently.
                        SGB:       As far as I know, all tested instances behave as emulated.
                        MGB, SGB2: Most instances behave non-deterministically, a few behave as emulated.
@@ -866,7 +866,7 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
                 memcpy(gb->apu.wave_channel.wave_form,
                         gb->apu.wave_channel.wave_form + (offset & ~3) * 2,
                         8);
-                    
+		}    
                 
                 if (!gb->apu.is_active[GB_WAVE]) {
                     gb->apu.is_active[GB_WAVE] = true;
@@ -901,7 +901,7 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
             } */
             gb->apu.wave_channel.length_enabled = value & 0x40;
             if (gb->apu.is_active[GB_WAVE] && !gb->apu.wave_channel.enable) {
-                gb->apu.is_active[GB_WAVE] = false;
+                //gb->apu.is_active[GB_WAVE] = false;
                 update_sample(gb, GB_WAVE, 0, 0);
             }
 
@@ -1021,8 +1021,7 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
     gb->io_registers[reg] = value;
 }
 
-void GB_set_sample_rate(GB_gameboy_t *gb, unsigned sample_rate)
-{
+void GB_set_sample_rate(GB_gameboy_t *gb, unsigned sample_rate) {
 
     gb->apu_output.sample_rate = sample_rate;
     if (sample_rate) {
@@ -1032,8 +1031,7 @@ void GB_set_sample_rate(GB_gameboy_t *gb, unsigned sample_rate)
     GB_apu_update_cycles_per_sample(gb);
 }
 
-void GB_set_sample_rate_by_clocks(GB_gameboy_t *gb, double cycles_per_sample)
-{
+void GB_set_sample_rate_by_clocks(GB_gameboy_t *gb, double cycles_per_sample) {
 
     if (cycles_per_sample == 0) {
         GB_set_sample_rate(gb, 0);
@@ -1045,18 +1043,15 @@ void GB_set_sample_rate_by_clocks(GB_gameboy_t *gb, double cycles_per_sample)
     gb->apu_output.rate_set_in_clocks = true;
 }
 
-void GB_apu_set_sample_callback(GB_gameboy_t *gb, GB_sample_callback_t callback)
-{
+void GB_apu_set_sample_callback(GB_gameboy_t *gb, GB_sample_callback_t callback) {
     gb->apu_output.sample_callback = callback;
 }
 
-void GB_set_highpass_filter_mode(GB_gameboy_t *gb, GB_highpass_mode_t mode)
-{
+void GB_set_highpass_filter_mode(GB_gameboy_t *gb, GB_highpass_mode_t mode) {
     gb->apu_output.highpass_mode = mode;
 }
 
-void GB_apu_update_cycles_per_sample(GB_gameboy_t *gb)
-{
+void GB_apu_update_cycles_per_sample(GB_gameboy_t *gb) {
     if (gb->apu_output.rate_set_in_clocks) return;
     if (gb->apu_output.sample_rate) {
         gb->apu_output.cycles_per_sample = 2 * GB_get_clock_rate(gb) / (double)gb->apu_output.sample_rate; /* 2 * because we use 8MHz units */
