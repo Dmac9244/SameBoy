@@ -1,3 +1,7 @@
+## Modifications
+
+I am trying to modify this version of SameBoy in an attempt to create an ideal Game Boy sound engine. My first goal is to remove the clicks from channel 3, and then I will move on to other improvements. The end goal is to have a version which has a toggle for "XQ Audio" in settings which will allow users to have the option of accurate or idealized audio. Best case, this final version will be merged with the original so that XQ Audio will be a standard feature in SameBoy.
+
 # SameBoy
 
 SameBoy is an open source Game Boy (DMG) and Game Boy Color (CGB) emulator, written in portable C. It has a native Cocoa frontend for macOS, an SDL frontend for other operating systems, and a libretro core. It also includes a text-based debugger with an expression evaluator. Visit [the website](https://sameboy.github.io/).
