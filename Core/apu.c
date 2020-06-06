@@ -12,6 +12,7 @@ static const uint8_t duties[] = {
     1, 0, 0, 0, 0, 0, 0, 1,
     1, 0, 0, 0, 0, 1, 1, 1,
     0, 1, 1, 1, 1, 1, 1, 0,
+    
 };
 
 static void refresh_channel(GB_gameboy_t *gb, unsigned index, unsigned cycles_offset)
@@ -488,7 +489,7 @@ void GB_apu_run(GB_gameboy_t *gb)
                 gb->apu.wave_channel.current_sample_index++;
                 gb->apu.wave_channel.current_sample_index &= 0x1F;
                 gb->apu.wave_channel.current_sample =
-                    gb->apu.wave_channel.wave_form[gb->apu.wave_channel.current_sample_index];
+                    gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger][gb->apu.wave_channel.current_sample_index];
                 update_sample(gb, GB_WAVE,
                               gb->apu.wave_channel.current_sample >> gb->apu.wave_channel.shift,
                               cycles - cycles_left);
@@ -547,11 +548,14 @@ void GB_apu_run(GB_gameboy_t *gb)
 }
 void GB_apu_init(GB_gameboy_t *gb)
 {
+    gb->apu.wave_channel.wf_trigger = 0;
     memset(&gb->apu, 0, sizeof(gb->apu));
     /* Restore the wave form */
     for (unsigned reg = GB_IO_WAV_START; reg <= GB_IO_WAV_END; reg++) {
-        gb->apu.wave_channel.wave_form[(reg - GB_IO_WAV_START) * 2]     = gb->io_registers[reg] >> 4;
-        gb->apu.wave_channel.wave_form[(reg - GB_IO_WAV_START) * 2 + 1] = gb->io_registers[reg] & 0xF;
+	for (unsigned i = 0; i < 2; i++) {
+        	gb->apu.wave_channel.wave_form[i][(reg - GB_IO_WAV_START) * 2]     = gb->io_registers[reg] >> 4;
+        	gb->apu.wave_channel.wave_form[i][(reg - GB_IO_WAV_START) * 2 + 1] = gb->io_registers[reg] & 0xF;
+	}
     }
     gb->apu.lf_div = 1;
     /* APU glitch: When turning the APU on while DIV's bit 4 (or 5 in double speed mode) is on,
@@ -620,6 +624,11 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
             return;
         }
         reg = GB_IO_WAV_START + gb->apu.wave_channel.current_sample_index / 2;
+        /* Code here to change the waveform in advance?
+        gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2]     = value >> 4;
+	gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2 + 1] = value & 0xF;
+        gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2]     = value >> 4;
+	gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2 + 1] = value & 0xF; */
     }
 
     /* Todo: this can and should be rewritten with a function table. */
@@ -840,34 +849,34 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
             gb->apu.wave_channel.sample_length |= (value & 7) << 8;
             if ((value & 0x80)) {
                 /* DMG bug: wave RAM gets corrupted if the channel is retriggerred 1 cycle before the APU
-                            reads from it. 
-                if (!GB_is_cgb(gb) &&
-                    gb->apu.is_active[GB_WAVE] &&
-                    gb->apu.wave_channel.sample_countdown == 0 &&
-                    gb->apu.wave_channel.enable) {
-                    unsigned offset = ((gb->apu.wave_channel.current_sample_index + 1) >> 1) & 0xF;
+                            reads from it. */ 
+                //if (!GB_is_cgb(gb) &&
+                  //  gb->apu.is_active[GB_WAVE] &&
+                  //  gb->apu.wave_channel.sample_countdown == 0 &&
+                  //  gb->apu.wave_channel.enable) {
+                  //  unsigned offset = ((gb->apu.wave_channel.current_sample_index + 1) >> 1) & 0xF;
 
-                    /* This glitch varies between models and even specific instances:
+                   /*  This glitch varies between models and even specific instances:
                        DMG-B:     Most of them behave as emulated. A few behave differently.
                        SGB:       As far as I know, all tested instances behave as emulated.
                        MGB, SGB2: Most instances behave non-deterministically, a few behave as emulated.
 
                       Additionally, I believe DMGs, including those we behave differently than emulated,
-                      are all deterministic. 
-                    if (offset < 4) {
-                        gb->io_registers[GB_IO_WAV_START] = gb->io_registers[GB_IO_WAV_START + offset];
-                        gb->apu.wave_channel.wave_form[0] = gb->apu.wave_channel.wave_form[offset / 2];
-                        gb->apu.wave_channel.wave_form[1] = gb->apu.wave_channel.wave_form[offset / 2 + 1];
-                    } */
-                  
+                      are all deterministic. */ 
+                    //if (offset < 4) {
+                     //   gb->io_registers[GB_IO_WAV_START] = gb->io_registers[GB_IO_WAV_START + offset];
+                     //   gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger][0] = gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger][offset / 2];
+                     //   gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger][1] = gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger][offset / 2 + 1];
+                    //} 
+		    //else { 
                 memcpy(gb->io_registers + GB_IO_WAV_START,
-                        gb->io_registers + GB_IO_WAV_START + (offset & ~3),
+                        gb->io_registers + GB_IO_WAV_START/* + (offset & ~3)*/,
                         4);
-                memcpy(gb->apu.wave_channel.wave_form,
-                        gb->apu.wave_channel.wave_form + (offset & ~3) * 2,
+                memcpy(gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger],
+                        gb->apu.wave_channel.wave_form[gb->apu.wave_channel.wf_trigger]/* + (offset & ~3) * 2*/,
                         8);
-                    
-                
+		    //}
+		//}  
                 if (!gb->apu.is_active[GB_WAVE]) {
                     gb->apu.is_active[GB_WAVE] = true;
                     update_sample(gb, GB_WAVE,
@@ -883,7 +892,7 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
                 /* Note that we don't change the sample just yet! This was verified on hardware. */
             }
 
-            /* APU glitch - if length is enabled while the DIV-divider's LSB is 1, tick the length once. 
+            /* APU glitch - if length is enabled while the DIV-divider's LSB is 1, tick the length once. */ 
             if ((value & 0x40) &&
                 !gb->apu.wave_channel.length_enabled &&
                 (gb->apu.div_divider & 1) &&
@@ -898,7 +907,7 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
                         update_sample(gb, GB_WAVE, 0, 0);
                     }
                 }
-            } */
+            } 
             gb->apu.wave_channel.length_enabled = value & 0x40;
             if (gb->apu.is_active[GB_WAVE] && !gb->apu.wave_channel.enable) {
                 gb->apu.is_active[GB_WAVE] = false;
@@ -906,7 +915,7 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
             }
 
             break;
-
+        
         /* Noise Channel */
 
         case GB_IO_NR41: {
@@ -1014,8 +1023,15 @@ void GB_apu_write(GB_gameboy_t *gb, uint8_t reg, uint8_t value)
 
         default:
             if (reg >= GB_IO_WAV_START && reg <= GB_IO_WAV_END) {
-                gb->apu.wave_channel.wave_form[(reg - GB_IO_WAV_START) * 2]     = value >> 4;
-                gb->apu.wave_channel.wave_form[(reg - GB_IO_WAV_START) * 2 + 1] = value & 0xF;
+		gb->apu.wave_channel.wf_trigger = !gb->apu.wave_channel.wf_trigger;    
+                gb->apu.wave_channel.wave_form[!gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2]     = value >> 4;
+	        gb->apu.wave_channel.wave_form[!gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2 + 1] = value & 0xF;
+                //gb->apu.wave_channel.wave_form[!gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2]     = value >> 4;
+	        //gb->apu.wave_channel.wave_form[!gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2 + 1] = value & 0xF;
+                //gb->apu.wave_channel.wave_form[!gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2]     = value >> 4;
+	        //gb->apu.wave_channel.wave_form[!gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2 + 1] = value & 0xF;
+                //gb->apu.wave_channel.wave_form[!gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2]     = value >> 4;
+	        //gb->apu.wave_channel.wave_form[!gb->apu.wave_channel.wf_trigger][(reg - GB_IO_WAV_START) * 2 + 1] = value & 0xF;
             }
     }
     gb->io_registers[reg] = value;

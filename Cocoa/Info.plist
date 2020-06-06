@@ -11,7 +11,7 @@
 		<dict>
 			<key>CFBundleTypeExtensions</key>
 			<array>
-				<string>gb</string>
+				<string>*</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>Cartridge</string>
@@ -19,50 +19,6 @@
 			<string>Game Boy Game</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>com.github.liji32.sameboy.gb</string>
-			</array>
-			<key>LSTypeIsPackage</key>
-			<integer>0</integer>
-			<key>NSDocumentClass</key>
-			<string>Document</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>gbc</string>
-			</array>
-			<key>CFBundleTypeIconFile</key>
-			<string>ColorCartridge</string>
-			<key>CFBundleTypeName</key>
-			<string>Game Boy Color Game</string>
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>com.github.liji32.sameboy.gbc</string>
-			</array>
-			<key>LSTypeIsPackage</key>
-			<integer>0</integer>
-			<key>NSDocumentClass</key>
-			<string>Document</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>gbc</string>
-			</array>
-			<key>CFBundleTypeIconFile</key>
-			<string>ColorCartridge</string>
-			<key>CFBundleTypeName</key>
-			<string>Game Boy ISX File</string>
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>com.github.liji32.sameboy.isx</string>
-			</array>
 			<key>LSTypeIsPackage</key>
 			<integer>0</integer>
 			<key>NSDocumentClass</key>
@@ -87,7 +43,7 @@
 	<string>????</string>
 	<key>CFBundleSupportedPlatforms</key>
 	<array>
-		<string>MacOSX</string>
+		<string>macOS</string>
 	</array>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.9</string>

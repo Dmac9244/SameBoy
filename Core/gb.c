@@ -1303,10 +1303,11 @@ static void reset_ram(GB_gameboy_t *gb)
                 else {
                     temp = GB_random() | GB_random() | GB_random();
                 }
-                gb->apu.wave_channel.wave_form[i * 2]     = temp >> 4;
-                gb->apu.wave_channel.wave_form[i * 2 + 1] = temp & 0xF;
-                gb->io_registers[GB_IO_WAV_START + i] = temp;
-
+                for (int8_t j = 0; j < 2; j++) { 
+                    gb->apu.wave_channel.wave_form[j][i * 2]     = temp >> 4;
+                    gb->apu.wave_channel.wave_form[j][i * 2 + 1] = temp & 0xF;
+		}    
+		    gb->io_registers[GB_IO_WAV_START + i] = temp;
             }
             break;
         }

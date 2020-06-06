@@ -1692,10 +1692,26 @@ static bool apu(GB_gameboy_t *gb, char *arguments, char *modifiers, const debugg
 
     GB_log(gb, "\nCH3:\n");
     GB_log(gb, "    Wave:");
+    for (unsigned j = 0; j < 2; j++) {
+        GB_log(gb, "%d", j);
+	GB_log(gb, "\n");
+        for (uint8_t i = 0; i < 32; i++) {
+            GB_log(gb, "%s%X", i%4?"":" ", gb->apu.wave_channel.wave_form[j][i]);
+        }
+        GB_log(gb, "\n");
+    }
+/*
+
     for (uint8_t i = 0; i < 32; i++) {
-        GB_log(gb, "%s%X", i%4?"":" ", gb->apu.wave_channel.wave_form[i]);
+        for (unsigned j = 0; j < 2; j++) {
+        GB_log(gb, "%s%X", i%4?"":" ", gb->apu.wave_channel.wave_form[j][i]);
+        }
     }
     GB_log(gb, "\n");
+
+
+
+*/
     GB_log(gb, "    Current position: %u\n", gb->apu.wave_channel.current_sample_index);
 
     GB_log(gb, "    Volume %s (right-shifted %u times)\n",
@@ -1760,15 +1776,20 @@ static bool wave(GB_gameboy_t *gb, char *arguments, char *modifiers, const debug
     }
     mask = (0xf << (shift_amount - 1)) & 0xf;
 
-    for (int8_t cur_val = 0xf & mask; cur_val >= 0; cur_val -= shift_amount) {
-        for (uint8_t i = 0; i < 32; i++) {
-            if ((gb->apu.wave_channel.wave_form[i] & mask) == cur_val) {
-                GB_log(gb, "%X", gb->apu.wave_channel.wave_form[i]);
-            }
-            else {
-                GB_log(gb, "%c", i%4 == 2 ? '-' : ' ');
-            }
-        }
+
+    for (unsigned j = 0; j < 2; j++) {
+        for (int8_t cur_val = 0xf & mask; cur_val >= 0; cur_val -= shift_amount) {
+            for (uint8_t i = 0; i < 32; i ++) {
+		if ((gb->apu.wave_channel.wave_form[j][i] & mask) == cur_val) {
+                    GB_log(gb, "%X", gb->apu.wave_channel.wave_form[j][i]);
+		}
+                else {
+		    GB_log(gb, "%c", i%4 == 2 ? '-' : ' ');
+	        }  
+	    }
+            GB_log(gb, "\n");
+	}
+        GB_log(gb, "\n");
         GB_log(gb, "\n");
     }
 
